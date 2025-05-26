@@ -64,7 +64,6 @@ class PacienteDialog(QDialog):
         
         layout = QVBoxLayout()
         
-        # Campos do formulário
         self.nome = QLineEdit()
         self.idade = QSpinBox()
         self.idade.setRange(1, 120)
@@ -81,7 +80,6 @@ class PacienteDialog(QDialog):
         self.telefone = QLineEdit()
         self.email = QLineEdit()
         
-        # Layout do formulário
         form_layout = QFormLayout()
         form_layout.addRow("Nome:", self.nome)
         form_layout.addRow("Idade:", self.idade)
@@ -95,7 +93,6 @@ class PacienteDialog(QDialog):
         
         layout.addLayout(form_layout)
         
-        # Botões
         button_layout = QHBoxLayout()
         self.save_btn = QPushButton("Salvar")
         self.cancel_btn = QPushButton("Cancelar")
@@ -137,11 +134,11 @@ class PacienteDialog(QDialog):
             self.email.text()
         )
         
-        if self.paciente_data:  # Edição
+        if self.paciente_data: 
             query = """UPDATE pacientes SET nome=%s, idade=%s, sexo=%s, peso=%s, altura=%s,
                     historico_medico=%s, alergias=%s, telefone=%s, email=%s WHERE id=%s"""
             self.db.execute_insert(query, data + (self.paciente_data[0],))
-        else:  # Novo
+        else: 
             query = """INSERT INTO pacientes (nome, idade, sexo, peso, altura, historico_medico, 
                     alergias, telefone, email) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
             result = self.db.execute_insert(query, data)
@@ -168,7 +165,6 @@ class ConsultaDialog(QDialog):
         
         layout = QVBoxLayout()
         
-        # Campos
         self.paciente = QComboBox()
         self.load_pacientes()
         self.data_consulta = QDateTimeEdit()
@@ -185,7 +181,6 @@ class ConsultaDialog(QDialog):
         self.valor.setRange(0, 9999)
         self.valor.setDecimals(2)
         
-        # Layout do formulário
         form_layout = QFormLayout()
         form_layout.addRow("Paciente:", self.paciente)
         form_layout.addRow("Data/Hora:", self.data_consulta)
@@ -198,7 +193,6 @@ class ConsultaDialog(QDialog):
         
         layout.addLayout(form_layout)
         
-        # Botões
         button_layout = QHBoxLayout()
         self.save_btn = QPushButton("Salvar")
         self.cancel_btn = QPushButton("Cancelar")
@@ -219,7 +213,6 @@ class ConsultaDialog(QDialog):
             self.paciente.addItem(f"{p[1]}", p[0])
     
     def load_data(self):
-        # Carregar dados da consulta existente
         for i in range(self.paciente.count()):
             if self.paciente.itemData(i) == self.consulta_data[1]:
                 self.paciente.setCurrentIndex(i)
@@ -251,16 +244,15 @@ class ConsultaDialog(QDialog):
             self.valor.value()
         )
         
-        if self.consulta_data:  # Edição
+        if self.consulta_data: 
             query = """UPDATE consultas SET paciente_id=%s, data_consulta=%s, anotacoes=%s, 
                       dieta_prescrita=%s, orientacoes=%s, peso_atual=%s, status=%s, valor=%s WHERE id=%s"""
             self.db.execute_insert(query, data + (self.consulta_data[0],))
-        else:  # Nova
+        else: 
             query = """INSERT INTO consultas (paciente_id, data_consulta, anotacoes, dieta_prescrita, 
                       orientacoes, peso_atual, status, valor) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"""
             result = self.db.execute_insert(query, data)
             
-            # Add weight record if consultation is completed
             if result and self.status.currentText() == 'Realizada' and self.peso_atual.value() > 0:
                 peso_query = """INSERT INTO historico_peso (paciente_id, peso, data_pesagem) 
                                VALUES (%s, %s, %s)"""
@@ -279,7 +271,6 @@ class GraphWidget(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
         
-        # Botões para diferentes gráficos
         button_layout = QHBoxLayout()
         self.btn_evolucao = QPushButton("Gráfico Evolução Peso")
         self.btn_comparacao = QPushButton("Comparação Pacientes")
@@ -294,7 +285,6 @@ class GraphWidget(QWidget):
         button_layout.addWidget(self.btn_consultas_mes)
         layout.addLayout(button_layout)
         
-        # Área do gráfico
         self.figure = Figure(figsize=(12, 8))
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
@@ -302,7 +292,6 @@ class GraphWidget(QWidget):
         self.setLayout(layout)
     
     def show_evolucao_peso(self):
-        # Dialog para selecionar paciente
         pacientes = self.db.execute_query("SELECT id, nome FROM pacientes ORDER BY nome")
         if not pacientes:
             QMessageBox.information(self, "Info", "Nenhum paciente cadastrado!")
@@ -342,7 +331,6 @@ class GraphWidget(QWidget):
         ax.set_ylabel('Peso (kg)', fontsize=12)
         ax.grid(True, alpha=0.3)
         
-        # Rotacionar labels das datas
         plt.setp(ax.get_xticklabels(), rotation=45)
         
         self.figure.tight_layout()
@@ -358,7 +346,6 @@ class GraphWidget(QWidget):
         
         self.figure.clear()
         
-        # Subplot para peso
         ax1 = self.figure.add_subplot(121)
         nomes = [d[0][:10] + '...' if len(d[0]) > 10 else d[0] for d in dados]
         pesos = [float(d[1]) for d in dados]
@@ -370,7 +357,6 @@ class GraphWidget(QWidget):
         ax1.set_xticks(range(len(nomes)))
         ax1.set_xticklabels(nomes, rotation=45, ha='right')
         
-        # Subplot para IMC
         ax2 = self.figure.add_subplot(122)
         imcs = [float(d[2]) if d[2] else 0 for d in dados]
         
@@ -382,7 +368,6 @@ class GraphWidget(QWidget):
         ax2.set_xticks(range(len(nomes)))
         ax2.set_xticklabels(nomes, rotation=45, ha='right')
         
-        # Add IMC reference lines
         ax2.axhline(y=25, color='orange', linestyle='--', alpha=0.7, label='Sobrepeso')
         ax2.axhline(y=30, color='red', linestyle='--', alpha=0.7, label='Obesidade')
         ax2.legend()
